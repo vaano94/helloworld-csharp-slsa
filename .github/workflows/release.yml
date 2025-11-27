@@ -45,7 +45,7 @@ jobs:
       id-token: write
       actions: read
       packages: write
-    uses: jreleaser/jreleaser-slsa/.github/workflows/builder_slsa3_csharp.yml@v1.1.0
+    uses: jreleaser/jreleaser-slsa/.github/workflows/builder_slsa3_csharp.yml@v1.2.0
     with:
       project-version: ${{ needs.precheck.outputs.VERSION }}
       jreleaser-version: early-access
