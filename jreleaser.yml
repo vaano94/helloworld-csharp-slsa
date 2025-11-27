@@ -1,0 +1,72 @@
+environment:
+  properties:
+    artifactsDir: out/jreleaser/assemble/helloworld/archive
+
+matrix:
+  rows:
+    - { runtime: osx-x64,        platform: osx-x86_64        }
+    - { runtime: osx-arm64,      platform: osx-aarch_64      }
+    - { runtime: win-x64,        platform: windows-x86_64    }
+    - { runtime: win-arm64,      platform: windows-aarch_64  }
+    - { runtime: linux-x64,      platform: linux-x86_64      }
+    - { runtime: linux-arm64,    platform: linux-aarch_64    }
+    - { runtime: linux-musl-x64, platform: linux_musl-x86_64 }
+
+hooks:
+  script:
+    before:
+      - run: |
+          dotnet build --configuration Release
+          mkdir bin
+        filter:
+          includes: ['assemble']
+      - run: |
+          dotnet publish src/helloworld/helloworld.csproj -r $RUNTIME --configuration Release /p:Version=$VERSION --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesInSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true --output bin/$RUNTIME
+          chmod +x bin/$RUNTIME/*
+        applyDefaultMatrix: true
+        verbose: true
+        environment:
+          VERSION: '{{ projectVersion }}'
+          RUNTIME: '{{ matrix.runtime }}'
+        filter:
+          includes: ['assemble']
+
+project:
+  name: helloworld
+  description: HelloWorld in C#
+  longDescription: HelloWorld in C#
+  links:
+    homepage: https://github.com/jreleaser/helloworld-csharp
+  authors:
+    - Andres Almiray
+  license: APACHE-2.0
+  inceptionYear: 2022
+  stereotype: CLI
+    
+release:
+  github:
+    overwrite: true
+    changelog:
+      formatted: ALWAYS
+      preset: conventional-commits
+      contributors:
+        format: '- {{contributorName}}{{#contributorUsernameAsLink}} ({{.}}){{/contributorUsernameAsLink}}'
+
+assemble:
+  archive:
+    helloworld:
+      active: ALWAYS
+      formats: [ ZIP ]
+      applyDefaultMatrix: true
+      archiveName: '{{distributionName}}-{{projectVersion}}-{{ matrix.platform }}'
+      fileSets:
+        - input: 'bin/{{ matrix.runtime }}'
+          output: 'bin'
+          includes: ['helloworld{.exe,}']
+        - input: '.'
+          includes: ['LICENSE']
+          
+distributions:
+  helloworld:
+    executable:
+      windowsExtension: exe
